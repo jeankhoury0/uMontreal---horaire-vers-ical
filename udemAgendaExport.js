@@ -16,29 +16,29 @@
 // start point
 
 (function () {
-	createAButton()
+    createAButton()
 
 })();
 
 
 // START ON BUTTON CLICK
 function generateTheScheduleAction() {
-	var allTheCoursesArr = []
-	var CoursesRow = document.querySelector(".PABACKGROUNDINVISIBLE").children[0].children
-	for (var i = 0; i < CoursesRow.length; i++) {
-		allTheCoursesArr.push(
-			getCourseInformation(CoursesRow[i], i)
-		)
-	}
+    var allTheCoursesArr = []
+    var CoursesRow = document.querySelector(".PABACKGROUNDINVISIBLE").children[0].children
+    for (var i = 0; i < CoursesRow.length; i++) {
+        allTheCoursesArr.push(
+            getCourseInformation(CoursesRow[i], i)
+        )
+    }
 
-	var cal = generateTheCalendar(allTheCoursesArr)
-	console.log(cal)
-	
-	var user = document.querySelector(".gh-username").innerText
-	cal.download(`${user} calendrier ${Date.now()}`)
+    var cal = generateTheCalendar(allTheCoursesArr)
+    console.log(cal)
+
+    var user = document.querySelector(".gh-username").innerText
+    cal.download(`${user} calendrier ${Date.now()}`)
 
 
-	console.log(allTheCoursesArr)
+    console.log(allTheCoursesArr)
 }
 
 
@@ -46,9 +46,9 @@ function generateTheScheduleAction() {
 // create a button
 
 function createAButton() {
-	var body_of_page = document.querySelector("body")
-	var button_content = document.createElement("div")
-	button_content.innerHTML = (`
+    var body_of_page = document.querySelector("body")
+    var button_content = document.createElement("div")
+    button_content.innerHTML = (`
 	<div style="position: fixed; bottom: 5%; right: 5%; z-index:1000;">
 		<p>Utiliser "Page Imprimable" <br> au bas de l'écran </p>
 		<button id="tm-button-generate"> Generate Schedule</button>
@@ -68,163 +68,163 @@ function createAButton() {
 		}
 	</style>
 	`)
-	body_of_page.append(button_content)
-	document.querySelector("#tm-button-generate").addEventListener("click", generateTheScheduleAction, false)
+    body_of_page.append(button_content)
+    document.querySelector("#tm-button-generate").addEventListener("click", generateTheScheduleAction, false)
 }
 
 
 // Extract the course info
 
 function getCourseInformation(tabularInfoOfCourse, coursePosition) {
-	var course = {}
+    var course = {}
 
-	course.title = tabularInfoOfCourse.querySelector(".ui-bar").innerText
+    course.title = tabularInfoOfCourse.querySelector(".ui-bar").innerText
 
-	var tabularInfoOfTime = document.querySelector(".PABACKGROUNDINVISIBLE").children[0].children[2].querySelectorAll(".PSLEVEL2GRIDWBO")[1]
-	course.time = getTimeInformation(tabularInfoOfTime, coursePosition)
-	return course
+    var tabularInfoOfTime = document.querySelector(".PABACKGROUNDINVISIBLE").children[0].children[2].querySelectorAll(".PSLEVEL2GRIDWBO")[1]
+    course.time = getTimeInformation(tabularInfoOfTime, coursePosition)
+    return course
 }
 
 function getTimeInformation(tabularInfoOfTime, coursePosition) {
-	// generate an ID trUMET_CLS_EXM_VW$1_row1
-	var rowCounter = 1 // firstPositionInTheCode
-	var oldVolet = null // the volet that was the previous row
+    // generate an ID trUMET_CLS_EXM_VW$1_row1
+    var rowCounter = 1 // firstPositionInTheCode
+    var oldVolet = null // the volet that was the previous row
 
-	var getTimeInformationArr = []
+    var getTimeInformationArr = []
 
-	while (document.querySelector(`[id="${getRowTimeId(coursePosition, rowCounter)}"]`)) {
-		var currentRow = document.querySelector(`[id="${getRowTimeId(coursePosition, rowCounter)}"]`)
-		rowCounter += 1
-		var res = processIndividualTimeRow(currentRow, oldVolet)
-		oldVolet = res?.volet
-		getTimeInformationArr.push(res)
-	}
-	return getTimeInformationArr
+    while (document.querySelector(`[id="${getRowTimeId(coursePosition, rowCounter)}"]`)) {
+        var currentRow = document.querySelector(`[id="${getRowTimeId(coursePosition, rowCounter)}"]`)
+        rowCounter += 1
+        var res = processIndividualTimeRow(currentRow, oldVolet)
+        oldVolet = res?.volet
+        getTimeInformationArr.push(res)
+    }
+    return getTimeInformationArr
 
 }
 
 function processIndividualTimeRow(currentRow, oldVolet) {
-	// return an object
-	var attr = currentRow.innerText.replaceAll("\n", "").split("\t")
-	var res = ({
-		volet: attr[2] || oldVolet,
-		start_time: getStartTime(attr[3]),
-		end_time: getEndTime(attr[3]),
-		recuring_day: getRecurringDay(attr[3]),
-		start_date: getStartDate(attr[6]),
-		end_date: getEndDate(attr[6]),
-		location: attr[4],
-		teacher: attr[5]
+    // return an object
+    var attr = currentRow.innerText.replaceAll("\n", "").split("\t")
+    var res = ({
+        volet: attr[2] || oldVolet,
+        start_time: getStartTime(attr[3]),
+        end_time: getEndTime(attr[3]),
+        recuring_day: getRecurringDay(attr[3]),
+        start_date: getStartDate(attr[6]),
+        end_date: getEndDate(attr[6]),
+        location: attr[4],
+        teacher: attr[5]
 
-	})
-	return (res)
+    })
+    return (res)
 }
 
 function getStartTime(row) {
-	var time = row.split(" ")[1]
-	// edge case when is full day
-	if (row == "À communiquer") {
-		return "00:00 am" 
-	}
-	return tConvert(time)
+    var time = row.split(" ")[1]
+    // edge case when is full day
+    if (row == "À communiquer") {
+        return "00:00 am"
+    }
+    return tConvert(time)
 }
 
 function getEndTime(row) {
-	var time = row.split(" ")[3]
-	// edge case when is full day
-	if (row == "À communiquer") {
-		return "00:00 am" // TODO: might be a bug, need to investigate how to do full day
-	}
-	return tConvert(time)
+    var time = row.split(" ")[3]
+    // edge case when is full day
+    if (row == "À communiquer") {
+        return "00:00 am" // TODO: might be a bug, need to investigate how to do full day
+    }
+    return tConvert(time)
 }
 
 function getRecurringDay(row) {
-	var day = row.split(" ")[0]
-	if (row == "À communiquer") {
-		return "Monday" // TODO: placeholder
-	}
+    var day = row.split(" ")[0]
+    if (row == "À communiquer") {
+        return "Monday" // TODO: placeholder
+    }
 
-	//SU, MO, TU, WE, TH, FR, SA
-	switch (day.toLowerCase()) {
-		case "lun":
-			return "MO"
-		case "ma":
-			return "TU"
-		case "mer":
-			return "WE"
-		case "j":
-			return "TH"
-		case "v":
-			return "FR"
-		case "s": //not sure
-			return "SA"
-		case "d":
-			return "SU" // not sure
-		default:
-			log.warn(`${day} is not recognized as a valid day, this might be due to a change of name in the student center, please open an issue`)
-			log.warn("will be assuming the day to be SA")
-			return "SA"
-	}
+    //SU, MO, TU, WE, TH, FR, SA
+    switch (day.toLowerCase()) {
+        case "lun":
+            return "MO"
+        case "ma":
+            return "TU"
+        case "mer":
+            return "WE"
+        case "j":
+            return "TH"
+        case "v":
+            return "FR"
+        case "s": //not sure
+            return "SA"
+        case "d":
+            return "SU" // not sure
+        default:
+            log.warn(`${day} is not recognized as a valid day, this might be due to a change of name in the student center, please open an issue`)
+            log.warn("will be assuming the day to be SA")
+            return "SA"
+    }
 }
 
 function getStartDate(row) {
-	res = row.split("-")[0].trim()
-	return res
+    res = row.split("-")[0].trim()
+    return res
 }
 
 function getEndDate(row) {
-	// if single date
-	if (row.split("-").length == 1) {
-		return row 
-	}
-	return row.split("-")[1].trim()
+    // if single date
+    if (row.split("-").length == 1) {
+        return row
+    }
+    return row.split("-")[1].trim()
 }
 
 
 
 function getRowTimeId(coursePosition, rowCounter) {
-	return `trUMET_CLS_EXM_VW$${coursePosition}_row${rowCounter}`
+    return `trUMET_CLS_EXM_VW$${coursePosition}_row${rowCounter}`
 }
 
 
 
-function generateTheCalendar(calendarObj){
-	var cal = ics()
-	calendarObj.forEach(c => {
-		c.time.forEach(time => {
-			cal.addEvent(
-				`[${time.volet}] ${c.title}`,
-				"",
-				time.location,
-				`${time.start_date} ${time.start_time}`,
-				`${time.start_date} ${time.end_time}`,
-				{
-					freq: "WEEKLY",
-					interval: 1,
-					until: time.end_date,
+function generateTheCalendar(calendarObj) {
+    var cal = ics()
+    calendarObj.forEach(c => {
+        c.time.forEach(time => {
+            cal.addEvent(
+                `[${time.volet}] ${c.title}`,
+                "",
+                time.location,
+                `${time.start_date} ${time.start_time}`,
+                `${time.start_date} ${time.end_time}`,
+                {
+                    freq: "WEEKLY",
+                    interval: 1,
+                    until: time.end_date,
                     byday: [time.recuring_day]
-				}
+                }
 
-		)
-		})
-	})
-	console.log(cal.calendar())
-	console.log(cal.events())
-	return cal
+            )
+        })
+    })
+    console.log(cal.calendar())
+    console.log(cal.events())
+    return cal
 }
 
 
-function tConvert (time) {
-	// Check correct time format and split into components
-	time = time.toString().match (/^([01]\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [time];
-  
-	if (time.length > 1) { // If time format correct
-	  time = time.slice (1);  // Remove full string match value
-	  time[5] = +time[0] < 12 ? ' am' : ' pm'; // Set AM/PM
-	  time[0] = +time[0] % 12 || 12; // Adjust hours
-	}
-	return time.join (''); // return adjusted time or original string
-  }
+function tConvert(time) {
+    // Check correct time format and split into components
+    time = time.toString().match(/^([01]\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [time];
+
+    if (time.length > 1) { // If time format correct
+        time = time.slice(1);  // Remove full string match value
+        time[5] = +time[0] < 12 ? ' am' : ' pm'; // Set AM/PM
+        time[0] = +time[0] % 12 || 12; // Adjust hours
+    }
+    return time.join(''); // return adjusted time or original string
+}
 
 
 
@@ -232,7 +232,7 @@ function tConvert (time) {
 /* global saveAs, Blob, BlobBuilder, console */
 /* exported ics */
 
-var ics = function(uidDomain, prodId) {
+var ics = function (uidDomain, prodId) {
     //'use strict';
 
     if (navigator.userAgent.indexOf('MSIE') > -1 && navigator.userAgent.indexOf('MSIE 10') == -1) {
@@ -258,17 +258,17 @@ var ics = function(uidDomain, prodId) {
         * Returns events array
         * @return {array} Events
         */
-        'events': function() {
+        'events': function () {
             return calendarEvents;
-            },
+        },
 
         /**
         * Returns calendar
         * @return {string} Calendar in iCalendar format
         */
-        'calendar': function() {
+        'calendar': function () {
             return calendarStart + SEPARATOR + calendarEvents.join(SEPARATOR) + calendarEnd;
-            },
+        },
 
         /**
         * Add event to the calendar
@@ -278,13 +278,13 @@ var ics = function(uidDomain, prodId) {
         * @param  {string} begin       Beginning date of event
         * @param  {string} stop        Ending date of event
         */
-        'addEvent': function(subject, description, location, begin, stop, rrule) {
+        'addEvent': function (subject, description, location, begin, stop, rrule) {
             // I'm not in the mood to make these optional... So they are all required
             if (typeof subject === 'undefined' ||
-            typeof description === 'undefined' ||
-            typeof location === 'undefined' ||
-            typeof begin === 'undefined' ||
-            typeof stop === 'undefined'
+                typeof description === 'undefined' ||
+                typeof location === 'undefined' ||
+                typeof begin === 'undefined' ||
+                typeof stop === 'undefined'
             ) {
                 return false;
             }
@@ -324,13 +324,13 @@ var ics = function(uidDomain, prodId) {
                         }
 
                         // Filter any possible repeats
-                        rrule.byday = rrule.byday.filter(function(elem, pos) {
+                        rrule.byday = rrule.byday.filter(function (elem, pos) {
                             return rrule.byday.indexOf(elem) == pos;
                         });
 
                         console.log(rrule.byday.length)
 
-                        rrule.byday.forEach( function(d){
+                        rrule.byday.forEach(function (d) {
                             console.log(d)
                             if (BYDAY_VALUES.indexOf(d) < 0) {
                                 throw "Recurrence rrule 'byday' values must include only the following: 'SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'";
@@ -432,14 +432,14 @@ var ics = function(uidDomain, prodId) {
 
             calendarEvents.push(calendarEvent);
             return calendarEvent;
-            },
+        },
 
         /**
         * Download calendar using the saveAs function from filesave.js
         * @param  {string} filename Filename
         * @param  {string} ext      Extention
         */
-        'download': function(filename, ext) {
+        'download': function (filename, ext) {
             if (calendarEvents.length < 1) {
                 return false;
             }
@@ -458,12 +458,12 @@ var ics = function(uidDomain, prodId) {
             }
             saveAs(blob, filename + ext);
             return calendar;
-            },
+        },
 
         /**
         * Build and return the ical contents
         */
-        'build': function() {
+        'build': function () {
             if (calendarEvents.length < 1) {
                 return false;
             }
@@ -477,4 +477,4 @@ var ics = function(uidDomain, prodId) {
 
 
 /*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
-var saveAs=saveAs||(navigator.msSaveOrOpenBlob&&navigator.msSaveOrOpenBlob.bind(navigator))||(function(h){"use strict";var r=h.document,l=function(){return h.URL||h.webkitURL||h},e=h.URL||h.webkitURL||h,n=r.createElementNS("http://www.w3.org/1999/xhtml","a"),g=!h.externalHost&&"download" in n,j=function(t){var s=r.createEvent("MouseEvents");s.initMouseEvent("click",true,false,h,0,0,0,0,0,false,false,false,false,0,null);t.dispatchEvent(s)},o=h.webkitRequestFileSystem,p=h.requestFileSystem||o||h.mozRequestFileSystem,m=function(s){(h.setImmediate||h.setTimeout)(function(){throw s},0)},c="application/octet-stream",k=0,b=[],i=function(){var t=b.length;while(t--){var s=b[t];if(typeof s==="string"){e.revokeObjectURL(s)}else{s.remove()}}b.length=0},q=function(t,s,w){s=[].concat(s);var v=s.length;while(v--){var x=t["on"+s[v]];if(typeof x==="function"){try{x.call(t,w||t)}catch(u){m(u)}}}},f=function(t,u){var v=this,B=t.type,E=false,x,w,s=function(){var F=l().createObjectURL(t);b.push(F);return F},A=function(){q(v,"writestart progress write writeend".split(" "))},D=function(){if(E||!x){x=s(t)}if(w){w.location.href=x}else{window.open(x,"_blank")}v.readyState=v.DONE;A()},z=function(F){return function(){if(v.readyState!==v.DONE){return F.apply(this,arguments)}}},y={create:true,exclusive:false},C;v.readyState=v.INIT;if(!u){u="download"}if(g){x=s(t);n.href=x;n.download=u;j(n);v.readyState=v.DONE;A();return}if(h.chrome&&B&&B!==c){C=t.slice||t.webkitSlice;t=C.call(t,0,t.size,c);E=true}if(o&&u!=="download"){u+=".download"}if(B===c||o){w=h}if(!p){D();return}k+=t.size;p(h.TEMPORARY,k,z(function(F){F.root.getDirectory("saved",y,z(function(G){var H=function(){G.getFile(u,y,z(function(I){I.createWriter(z(function(J){J.onwriteend=function(K){w.location.href=I.toURL();b.push(I);v.readyState=v.DONE;q(v,"writeend",K)};J.onerror=function(){var K=J.error;if(K.code!==K.ABORT_ERR){D()}};"writestart progress write abort".split(" ").forEach(function(K){J["on"+K]=v["on"+K]});J.write(t);v.abort=function(){J.abort();v.readyState=v.DONE};v.readyState=v.WRITING}),D)}),D)};G.getFile(u,{create:false},z(function(I){I.remove();H()}),z(function(I){if(I.code===I.NOT_FOUND_ERR){H()}else{D()}}))}),D)}),D)},d=f.prototype,a=function(s,t){return new f(s,t)};d.abort=function(){var s=this;s.readyState=s.DONE;q(s,"abort")};d.readyState=d.INIT=0;d.WRITING=1;d.DONE=2;d.error=d.onwritestart=d.onprogress=d.onwrite=d.onabort=d.onerror=d.onwriteend=null;h.addEventListener("unload",i,false);return a}(self));
+var saveAs = saveAs || (navigator.msSaveOrOpenBlob && navigator.msSaveOrOpenBlob.bind(navigator)) || (function (h) { "use strict"; var r = h.document, l = function () { return h.URL || h.webkitURL || h }, e = h.URL || h.webkitURL || h, n = r.createElementNS("http://www.w3.org/1999/xhtml", "a"), g = !h.externalHost && "download" in n, j = function (t) { var s = r.createEvent("MouseEvents"); s.initMouseEvent("click", true, false, h, 0, 0, 0, 0, 0, false, false, false, false, 0, null); t.dispatchEvent(s) }, o = h.webkitRequestFileSystem, p = h.requestFileSystem || o || h.mozRequestFileSystem, m = function (s) { (h.setImmediate || h.setTimeout)(function () { throw s }, 0) }, c = "application/octet-stream", k = 0, b = [], i = function () { var t = b.length; while (t--) { var s = b[t]; if (typeof s === "string") { e.revokeObjectURL(s) } else { s.remove() } } b.length = 0 }, q = function (t, s, w) { s = [].concat(s); var v = s.length; while (v--) { var x = t["on" + s[v]]; if (typeof x === "function") { try { x.call(t, w || t) } catch (u) { m(u) } } } }, f = function (t, u) { var v = this, B = t.type, E = false, x, w, s = function () { var F = l().createObjectURL(t); b.push(F); return F }, A = function () { q(v, "writestart progress write writeend".split(" ")) }, D = function () { if (E || !x) { x = s(t) } if (w) { w.location.href = x } else { window.open(x, "_blank") } v.readyState = v.DONE; A() }, z = function (F) { return function () { if (v.readyState !== v.DONE) { return F.apply(this, arguments) } } }, y = { create: true, exclusive: false }, C; v.readyState = v.INIT; if (!u) { u = "download" } if (g) { x = s(t); n.href = x; n.download = u; j(n); v.readyState = v.DONE; A(); return } if (h.chrome && B && B !== c) { C = t.slice || t.webkitSlice; t = C.call(t, 0, t.size, c); E = true } if (o && u !== "download") { u += ".download" } if (B === c || o) { w = h } if (!p) { D(); return } k += t.size; p(h.TEMPORARY, k, z(function (F) { F.root.getDirectory("saved", y, z(function (G) { var H = function () { G.getFile(u, y, z(function (I) { I.createWriter(z(function (J) { J.onwriteend = function (K) { w.location.href = I.toURL(); b.push(I); v.readyState = v.DONE; q(v, "writeend", K) }; J.onerror = function () { var K = J.error; if (K.code !== K.ABORT_ERR) { D() } }; "writestart progress write abort".split(" ").forEach(function (K) { J["on" + K] = v["on" + K] }); J.write(t); v.abort = function () { J.abort(); v.readyState = v.DONE }; v.readyState = v.WRITING }), D) }), D) }; G.getFile(u, { create: false }, z(function (I) { I.remove(); H() }), z(function (I) { if (I.code === I.NOT_FOUND_ERR) { H() } else { D() } })) }), D) }), D) }, d = f.prototype, a = function (s, t) { return new f(s, t) }; d.abort = function () { var s = this; s.readyState = s.DONE; q(s, "abort") }; d.readyState = d.INIT = 0; d.WRITING = 1; d.DONE = 2; d.error = d.onwritestart = d.onprogress = d.onwrite = d.onabort = d.onerror = d.onwriteend = null; h.addEventListener("unload", i, false); return a }(self));
