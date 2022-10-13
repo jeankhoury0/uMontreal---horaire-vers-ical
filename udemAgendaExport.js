@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Export to Ical
+// @name         [BETA] Export to Ical
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Export the UMontreal Calendar to Ical
 // @author       jeankhoury0
 // @match        https://academique-dmz.synchro.umontreal.ca/psc/acprpr9/EMPLOYEE/SA/c/SA_LEARNER_SERVICES.SSR_SSENRL_LIST.GBL*
@@ -202,7 +202,7 @@ function generateTheCalendar(calendarObj){
 					freq: "WEEKLY",
 					interval: 1,
 					until: time.end_date,
-
+                    byday: [time.recuring_day]
 				}
 
 		)
@@ -226,8 +226,255 @@ function tConvert (time) {
 	return time.join (''); // return adjusted time or original string
   }
 
-/*! ics.js Wed Sept 14 2017 */
-var ics=function(e,t){"use strict";{if(!(navigator.userAgent.indexOf("MSIE")>-1&&-1==navigator.userAgent.indexOf("MSIE 10"))){void 0===e&&(e="default"),void 0===t&&(t="Calendar");var r=-1!==navigator.appVersion.indexOf("Win")?"\r\n":"\n",n=[],i=["BEGIN:VCALENDAR","PRODID:"+t,"VERSION:2.0"].join(r),o=r+"END:VCALENDAR",a=["SU","MO","TU","WE","TH","FR","SA"];return{events:function(){return n},calendar:function(){return i+r+n.join(r)+o},addEvent:function(t,i,o,l,u,s){if(void 0===t||void 0===i||void 0===o||void 0===l||void 0===u)return!1;if(s&&!s.rrule){if("YEARLY"!==s.freq&&"MONTHLY"!==s.freq&&"WEEKLY"!==s.freq&&"DAILY"!==s.freq)throw"Recurrence rrule frequency must be provided and be one of the following: 'YEARLY', 'MONTHLY', 'WEEKLY', or 'DAILY'";if(s.until&&isNaN(Date.parse(s.until)))throw"Recurrence rrule 'until' must be a valid date string";if(s.interval&&isNaN(parseInt(s.interval)))throw"Recurrence rrule 'interval' must be an integer";if(s.count&&isNaN(parseInt(s.count)))throw"Recurrence rrule 'count' must be an integer";if(void 0!==s.byday){if("[object Array]"!==Object.prototype.toString.call(s.byday))throw"Recurrence rrule 'byday' must be an array";if(s.byday.length>7)throw"Recurrence rrule 'byday' array must not be longer than the 7 days in a week";s.byday=s.byday.filter(function(e,t){return s.byday.indexOf(e)==t});for(var c in s.byday)if(a.indexOf(s.byday[c])<0)throw"Recurrence rrule 'byday' values must include only the following: 'SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'"}}var g=new Date(l),d=new Date(u),f=new Date,S=("0000"+g.getFullYear().toString()).slice(-4),E=("00"+(g.getMonth()+1).toString()).slice(-2),v=("00"+g.getDate().toString()).slice(-2),y=("00"+g.getHours().toString()).slice(-2),A=("00"+g.getMinutes().toString()).slice(-2),T=("00"+g.getSeconds().toString()).slice(-2),b=("0000"+d.getFullYear().toString()).slice(-4),D=("00"+(d.getMonth()+1).toString()).slice(-2),N=("00"+d.getDate().toString()).slice(-2),h=("00"+d.getHours().toString()).slice(-2),I=("00"+d.getMinutes().toString()).slice(-2),R=("00"+d.getMinutes().toString()).slice(-2),M=("0000"+f.getFullYear().toString()).slice(-4),w=("00"+(f.getMonth()+1).toString()).slice(-2),L=("00"+f.getDate().toString()).slice(-2),O=("00"+f.getHours().toString()).slice(-2),p=("00"+f.getMinutes().toString()).slice(-2),Y=("00"+f.getMinutes().toString()).slice(-2),U="",V="";y+A+T+h+I+R!=0&&(U="T"+y+A+T,V="T"+h+I+R);var B,C=S+E+v+U,j=b+D+N+V,m=M+w+L+("T"+O+p+Y);if(s)if(s.rrule)B=s.rrule;else{if(B="rrule:FREQ="+s.freq,s.until){var x=new Date(Date.parse(s.until)).toISOString();B+=";UNTIL="+x.substring(0,x.length-13).replace(/[-]/g,"")+"000000Z"}s.interval&&(B+=";INTERVAL="+s.interval),s.count&&(B+=";COUNT="+s.count),s.byday&&s.byday.length>0&&(B+=";BYDAY="+s.byday.join(","))}(new Date).toISOString();var H=["BEGIN:VEVENT","UID:"+n.length+"@"+e,"CLASS:PUBLIC","DESCRIPTION:"+i,"DTSTAMP;VALUE=DATE-TIME:"+m,"DTSTART;VALUE=DATE-TIME:"+C,"DTEND;VALUE=DATE-TIME:"+j,"LOCATION:"+o,"SUMMARY;LANGUAGE=en-us:"+t,"TRANSP:TRANSPARENT","END:VEVENT"];return B&&H.splice(4,0,B),H=H.join(r),n.push(H),H},download:function(e,t){if(n.length<1)return!1;t=void 0!==t?t:".ics",e=void 0!==e?e:"calendar";var a,l=i+r+n.join(r)+o;if(-1===navigator.userAgent.indexOf("MSIE 10"))a=new Blob([l]);else{var u=new BlobBuilder;u.append(l),a=u.getBlob("text/x-vCalendar;charset="+document.characterSet)}return saveAs(a,e+t),l},build:function(){return!(n.length<1)&&i+r+n.join(r)+o}}}console.log("Unsupported Browser")}};
+
+
+
+/* global saveAs, Blob, BlobBuilder, console */
+/* exported ics */
+
+var ics = function(uidDomain, prodId) {
+    //'use strict';
+
+    if (navigator.userAgent.indexOf('MSIE') > -1 && navigator.userAgent.indexOf('MSIE 10') == -1) {
+        console.log('Unsupported Browser');
+        return;
+    }
+
+    if (typeof uidDomain === 'undefined') { uidDomain = 'default'; }
+    if (typeof prodId === 'undefined') { prodId = 'Calendar'; }
+
+    var SEPARATOR = (navigator.appVersion.indexOf('Win') !== -1) ? '\r\n' : '\n';
+    var calendarEvents = [];
+    var calendarStart = [
+        'BEGIN:VCALENDAR',
+        'PRODID:' + prodId,
+        'VERSION:2.0'
+    ].join(SEPARATOR);
+    var calendarEnd = SEPARATOR + 'END:VCALENDAR';
+    var BYDAY_VALUES = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+
+    return {
+        /**
+        * Returns events array
+        * @return {array} Events
+        */
+        'events': function() {
+            return calendarEvents;
+            },
+
+        /**
+        * Returns calendar
+        * @return {string} Calendar in iCalendar format
+        */
+        'calendar': function() {
+            return calendarStart + SEPARATOR + calendarEvents.join(SEPARATOR) + calendarEnd;
+            },
+
+        /**
+        * Add event to the calendar
+        * @param  {string} subject     Subject/Title of event
+        * @param  {string} description Description of event
+        * @param  {string} location    Location of event
+        * @param  {string} begin       Beginning date of event
+        * @param  {string} stop        Ending date of event
+        */
+        'addEvent': function(subject, description, location, begin, stop, rrule) {
+            // I'm not in the mood to make these optional... So they are all required
+            if (typeof subject === 'undefined' ||
+            typeof description === 'undefined' ||
+            typeof location === 'undefined' ||
+            typeof begin === 'undefined' ||
+            typeof stop === 'undefined'
+            ) {
+                return false;
+            }
+
+            // validate rrule
+            if (rrule) {
+                if (!rrule.rrule) {
+                    if (rrule.freq !== 'YEARLY' && rrule.freq !== 'MONTHLY' && rrule.freq !== 'WEEKLY' && rrule.freq !== 'DAILY') {
+                        throw "Recurrence rrule frequency must be provided and be one of the following: 'YEARLY', 'MONTHLY', 'WEEKLY', or 'DAILY'";
+                    }
+
+                    if (rrule.until) {
+                        if (isNaN(Date.parse(rrule.until))) {
+                            throw "Recurrence rrule 'until' must be a valid date string";
+                        }
+                    }
+
+                    if (rrule.interval) {
+                        if (isNaN(parseInt(rrule.interval))) {
+                            throw "Recurrence rrule 'interval' must be an integer";
+                        }
+                    }
+
+                    if (rrule.count) {
+                        if (isNaN(parseInt(rrule.count))) {
+                            throw "Recurrence rrule 'count' must be an integer";
+                        }
+                    }
+
+                    if (typeof rrule.byday !== 'undefined') {
+                        if ((Object.prototype.toString.call(rrule.byday) !== '[object Array]')) {
+                            throw "Recurrence rrule 'byday' must be an array";
+                        }
+
+                        if (rrule.byday.length > 7) {
+                            throw "Recurrence rrule 'byday' array must not be longer than the 7 days in a week";
+                        }
+
+                        // Filter any possible repeats
+                        rrule.byday = rrule.byday.filter(function(elem, pos) {
+                            return rrule.byday.indexOf(elem) == pos;
+                        });
+
+                        console.log(rrule.byday.length)
+
+                        rrule.byday.forEach( function(d){
+                            console.log(d)
+                            if (BYDAY_VALUES.indexOf(d) < 0) {
+                                throw "Recurrence rrule 'byday' values must include only the following: 'SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'";
+                            }
+                        }
+                        )
+
+                    }
+                }
+            }
+
+            //TODO add time and time zone? use moment to format?
+            var start_date = new Date(begin);
+            var end_date = new Date(stop);
+            var now_date = new Date();
+
+            var start_year = ("0000" + (start_date.getFullYear().toString())).slice(-4);
+            var start_month = ("00" + ((start_date.getMonth() + 1).toString())).slice(-2);
+            var start_day = ("00" + ((start_date.getDate()).toString())).slice(-2);
+            var start_hours = ("00" + (start_date.getHours().toString())).slice(-2);
+            var start_minutes = ("00" + (start_date.getMinutes().toString())).slice(-2);
+            var start_seconds = ("00" + (start_date.getSeconds().toString())).slice(-2);
+
+            var end_year = ("0000" + (end_date.getFullYear().toString())).slice(-4);
+            var end_month = ("00" + ((end_date.getMonth() + 1).toString())).slice(-2);
+            var end_day = ("00" + ((end_date.getDate()).toString())).slice(-2);
+            var end_hours = ("00" + (end_date.getHours().toString())).slice(-2);
+            var end_minutes = ("00" + (end_date.getMinutes().toString())).slice(-2);
+            var end_seconds = ("00" + (end_date.getSeconds().toString())).slice(-2);
+
+            var now_year = ("0000" + (now_date.getFullYear().toString())).slice(-4);
+            var now_month = ("00" + ((now_date.getMonth() + 1).toString())).slice(-2);
+            var now_day = ("00" + ((now_date.getDate()).toString())).slice(-2);
+            var now_hours = ("00" + (now_date.getHours().toString())).slice(-2);
+            var now_minutes = ("00" + (now_date.getMinutes().toString())).slice(-2);
+            var now_seconds = ("00" + (now_date.getSeconds().toString())).slice(-2);
+
+            // Since some calendars don't add 0 second events, we need to remove time if there is none...
+            var start_time = '';
+            var end_time = '';
+            if (start_hours + start_minutes + start_seconds + end_hours + end_minutes + end_seconds != 0) {
+                start_time = 'T' + start_hours + start_minutes + start_seconds;
+                end_time = 'T' + end_hours + end_minutes + end_seconds;
+            }
+            var now_time = 'T' + now_hours + now_minutes + now_seconds;
+
+            var start = start_year + start_month + start_day + start_time;
+            var end = end_year + end_month + end_day + end_time;
+            var now = now_year + now_month + now_day + now_time;
+
+            // recurrence rrule vars
+            var rruleString;
+            if (rrule) {
+                if (rrule.rrule) {
+                    rruleString = rrule.rrule;
+                } else {
+                    rruleString = 'RRULE:FREQ=' + rrule.freq;
+
+                    if (rrule.until) {
+                        var uDate = new Date(Date.parse(rrule.until)).toISOString();
+                        rruleString += ';UNTIL=' + uDate.substring(0, uDate.length - 13).replace(/[-]/g, '') + '000000Z';
+                    }
+
+                    if (rrule.interval) {
+                        rruleString += ';INTERVAL=' + rrule.interval;
+                    }
+
+                    if (rrule.count) {
+                        rruleString += ';COUNT=' + rrule.count;
+                    }
+
+                    if (rrule.byday && rrule.byday.length > 0) {
+                        rruleString += ';BYDAY=' + rrule.byday.join(',');
+                    }
+                }
+            }
+
+            var stamp = new Date().toISOString();
+
+            var calendarEvent = [
+                'BEGIN:VEVENT',
+                'UID:' + calendarEvents.length + "@" + uidDomain,
+                'CLASS:PUBLIC',
+                'DESCRIPTION:' + description,
+                'DTSTAMP;VALUE=DATE-TIME:' + now,
+                'DTSTART;VALUE=DATE-TIME:' + start,
+                'DTEND;VALUE=DATE-TIME:' + end,
+                'LOCATION:' + location,
+                'SUMMARY;LANGUAGE=en-us:' + subject,
+                'TRANSP:TRANSPARENT',
+                'END:VEVENT'
+            ];
+
+            if (rruleString) {
+                calendarEvent.splice(4, 0, rruleString);
+            }
+
+            calendarEvent = calendarEvent.join(SEPARATOR);
+
+            calendarEvents.push(calendarEvent);
+            return calendarEvent;
+            },
+
+        /**
+        * Download calendar using the saveAs function from filesave.js
+        * @param  {string} filename Filename
+        * @param  {string} ext      Extention
+        */
+        'download': function(filename, ext) {
+            if (calendarEvents.length < 1) {
+                return false;
+            }
+
+            ext = (typeof ext !== 'undefined') ? ext : '.ics';
+            filename = (typeof filename !== 'undefined') ? filename : 'calendar';
+            var calendar = calendarStart + SEPARATOR + calendarEvents.join(SEPARATOR) + calendarEnd;
+
+            var blob;
+            if (navigator.userAgent.indexOf('MSIE 10') === -1) { // chrome or firefox
+                blob = new Blob([calendar]);
+            } else { // ie
+                var bb = new BlobBuilder();
+                bb.append(calendar);
+                blob = bb.getBlob('text/x-vCalendar;charset=' + document.characterSet);
+            }
+            saveAs(blob, filename + ext);
+            return calendar;
+            },
+
+        /**
+        * Build and return the ical contents
+        */
+        'build': function() {
+            if (calendarEvents.length < 1) {
+                return false;
+            }
+
+            var calendar = calendarStart + SEPARATOR + calendarEvents.join(SEPARATOR) + calendarEnd;
+
+            return calendar;
+        }
+    };
+};
+
 
 /*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
 var saveAs=saveAs||(navigator.msSaveOrOpenBlob&&navigator.msSaveOrOpenBlob.bind(navigator))||(function(h){"use strict";var r=h.document,l=function(){return h.URL||h.webkitURL||h},e=h.URL||h.webkitURL||h,n=r.createElementNS("http://www.w3.org/1999/xhtml","a"),g=!h.externalHost&&"download" in n,j=function(t){var s=r.createEvent("MouseEvents");s.initMouseEvent("click",true,false,h,0,0,0,0,0,false,false,false,false,0,null);t.dispatchEvent(s)},o=h.webkitRequestFileSystem,p=h.requestFileSystem||o||h.mozRequestFileSystem,m=function(s){(h.setImmediate||h.setTimeout)(function(){throw s},0)},c="application/octet-stream",k=0,b=[],i=function(){var t=b.length;while(t--){var s=b[t];if(typeof s==="string"){e.revokeObjectURL(s)}else{s.remove()}}b.length=0},q=function(t,s,w){s=[].concat(s);var v=s.length;while(v--){var x=t["on"+s[v]];if(typeof x==="function"){try{x.call(t,w||t)}catch(u){m(u)}}}},f=function(t,u){var v=this,B=t.type,E=false,x,w,s=function(){var F=l().createObjectURL(t);b.push(F);return F},A=function(){q(v,"writestart progress write writeend".split(" "))},D=function(){if(E||!x){x=s(t)}if(w){w.location.href=x}else{window.open(x,"_blank")}v.readyState=v.DONE;A()},z=function(F){return function(){if(v.readyState!==v.DONE){return F.apply(this,arguments)}}},y={create:true,exclusive:false},C;v.readyState=v.INIT;if(!u){u="download"}if(g){x=s(t);n.href=x;n.download=u;j(n);v.readyState=v.DONE;A();return}if(h.chrome&&B&&B!==c){C=t.slice||t.webkitSlice;t=C.call(t,0,t.size,c);E=true}if(o&&u!=="download"){u+=".download"}if(B===c||o){w=h}if(!p){D();return}k+=t.size;p(h.TEMPORARY,k,z(function(F){F.root.getDirectory("saved",y,z(function(G){var H=function(){G.getFile(u,y,z(function(I){I.createWriter(z(function(J){J.onwriteend=function(K){w.location.href=I.toURL();b.push(I);v.readyState=v.DONE;q(v,"writeend",K)};J.onerror=function(){var K=J.error;if(K.code!==K.ABORT_ERR){D()}};"writestart progress write abort".split(" ").forEach(function(K){J["on"+K]=v["on"+K]});J.write(t);v.abort=function(){J.abort();v.readyState=v.DONE};v.readyState=v.WRITING}),D)}),D)};G.getFile(u,{create:false},z(function(I){I.remove();H()}),z(function(I){if(I.code===I.NOT_FOUND_ERR){H()}else{D()}}))}),D)}),D)},d=f.prototype,a=function(s,t){return new f(s,t)};d.abort=function(){var s=this;s.readyState=s.DONE;q(s,"abort")};d.readyState=d.INIT=0;d.WRITING=1;d.DONE=2;d.error=d.onwritestart=d.onprogress=d.onwrite=d.onabort=d.onerror=d.onwriteend=null;h.addEventListener("unload",i,false);return a}(self));
